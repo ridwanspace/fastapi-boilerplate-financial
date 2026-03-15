@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.contexts.transactions.domain.entities.transaction import Transaction
-from src.contexts.transactions.domain.exceptions import TransactionImmutableError
+from src.contexts.transactions.domain.exceptions import InvalidTransactionError
 from src.contexts.transactions.domain.value_objects.transaction_status import TransactionStatus
 from src.contexts.transactions.domain.value_objects.transaction_type import TransactionType
 from src.contexts.transactions.infrastructure.repositories.sql_transaction_repository import (
@@ -45,6 +45,7 @@ class TestSqlTransactionRepository:
 
     def test_amount_type_is_decimal(self):
         from decimal import Decimal
+
         txn = make_transaction()
         assert isinstance(txn.amount.amount, Decimal)
 
@@ -97,7 +98,7 @@ class TestSqlTransactionRepository:
         # Try to cancel an already-settled transaction via repo (simulate concurrent write)
         # We re-fetch and try to cancel (which will be blocked by domain first, but
         # if the domain were bypassed, repo immutability check catches it)
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidTransactionError):
             txn.cancel()  # domain raises first
 
     async def test_soft_delete_hides_from_get(self, db_session: AsyncSession):

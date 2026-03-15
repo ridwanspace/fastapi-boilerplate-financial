@@ -48,9 +48,7 @@ class Money(ValueObject):
         self._assert_same_currency(other)
         result = self.amount - other.amount
         if result < Decimal("0"):
-            raise InvalidMoneyAmountError(
-                f"Subtraction would result in negative amount: {result}"
-            )
+            raise InvalidMoneyAmountError(f"Subtraction would result in negative amount: {result}")
         return Money(amount=result, currency=self.currency)
 
     def multiply(self, factor: Decimal | int | str) -> "Money":

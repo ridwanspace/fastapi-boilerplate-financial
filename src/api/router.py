@@ -3,18 +3,19 @@ from fastapi import APIRouter
 
 from src.api.schemas.health import HealthResponse, ServiceStatus
 from src.container import container
+from src.contexts.transactions.api.router import router as transactions_router
 from src.infrastructure.auth.router import router as auth_router
 from src.settings import settings
 
-from src.contexts.transactions.api.router import router as transactions_router
-# from src.contexts.accounts.api.router import router as accounts_router
+
+# from src.contexts.accounts.api.router import router as accounts_router  # noqa: ERA001
 
 
 api_router = APIRouter()
 
 api_router.include_router(auth_router)
 api_router.include_router(transactions_router)
-# api_router.include_router(accounts_router)
+# api_router.include_router(accounts_router)  # noqa: ERA001
 
 
 @api_router.get(

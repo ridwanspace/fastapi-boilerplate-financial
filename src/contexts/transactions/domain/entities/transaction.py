@@ -137,9 +137,7 @@ class Transaction(AggregateRoot):
                 f"Cannot settle transaction in status: {self._status}"
             )
         if self._status != TransactionStatus.PENDING:
-            raise InvalidTransactionError(
-                f"Cannot settle transaction in status: {self._status}"
-            )
+            raise InvalidTransactionError(f"Cannot settle transaction in status: {self._status}")
         self._status = TransactionStatus.SETTLED
         self._settled_at = datetime.now(UTC)
         self._updated_by_id = settled_by_id

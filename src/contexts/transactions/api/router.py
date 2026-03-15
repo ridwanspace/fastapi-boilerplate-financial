@@ -2,6 +2,11 @@ import uuid
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 
+from src.contexts.transactions.api.schemas.request import CreateTransactionRequest
+from src.contexts.transactions.api.schemas.response import (
+    TransactionListResponse,
+    TransactionResponse,
+)
 from src.contexts.transactions.application.commands.create_transaction import (
     CreateTransactionCommand,
 )
@@ -18,11 +23,6 @@ from src.contexts.transactions.application.queries.list_transactions import (
     ListTransactionsHandler,
     ListTransactionsQuery,
 )
-from src.contexts.transactions.api.schemas.request import CreateTransactionRequest
-from src.contexts.transactions.api.schemas.response import (
-    TransactionListResponse,
-    TransactionResponse,
-)
 from src.contexts.transactions.domain.exceptions import (
     TransactionConcurrentUpdateError,
     TransactionImmutableError,
@@ -32,6 +32,7 @@ from src.contexts.transactions.domain.value_objects.transaction_status import Tr
 from src.infrastructure.auth.dependencies import get_current_user
 from src.infrastructure.auth.schemas import CurrentUser
 from src.infrastructure.database.unit_of_work import SqlAlchemyUnitOfWork
+from src.shared.application.result import Ok
 from src.shared.domain.value_objects.pagination import Pagination
 
 
@@ -40,6 +41,7 @@ router = APIRouter(prefix="/transactions", tags=["transactions"])
 
 def get_uow() -> SqlAlchemyUnitOfWork:
     from src.container import container
+
     return SqlAlchemyUnitOfWork(container.session_factory)
 
 
@@ -50,7 +52,8 @@ def get_uow() -> SqlAlchemyUnitOfWork:
     summary="Create a new financial transaction",
     description=(
         "Idempotent: supply `Idempotency-Key` header to safely retry on network failure. "
-        "A repeated request with the same key returns the original response without creating a duplicate."
+        "A repeated request with the same key returns the original response without creating a "
+        "duplicate."
     ),
 )
 async def create_transaction(
@@ -77,6 +80,7 @@ async def create_transaction(
     )
     if result.is_err():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(result.unwrap()))
+    assert isinstance(result, Ok)
     return TransactionResponse.from_dto(result.unwrap())
 
 
@@ -90,7 +94,7 @@ async def list_transactions(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     status_filter: TransactionStatus | None = Query(default=None, alias="status"),
-    current_user: CurrentUser = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),  # noqa: ARG001
     uow: SqlAlchemyUnitOfWork = Depends(get_uow),
 ) -> TransactionListResponse:
     handler = ListTransactionsHandler(uow)
@@ -130,4 +134,5 @@ async def settle_transaction(
         if isinstance(error, TransactionConcurrentUpdateError):
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error))
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
+    assert isinstance(result, Ok)
     return TransactionResponse.from_dto(result.unwrap())

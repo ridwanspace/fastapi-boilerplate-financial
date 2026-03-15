@@ -2,16 +2,19 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 import structlog
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
 from src.api.middleware.correlation_id import CorrelationIdMiddleware
-from src.api.middleware.error_handler import DomainError, domain_error_handler, unhandled_error_handler
+from src.api.middleware.error_handler import (
+    DomainError,
+    domain_error_handler,
+    unhandled_error_handler,
+)
 from src.api.middleware.request_logging import RequestLoggingMiddleware
 from src.api.router import api_router
 from src.container import container
@@ -25,13 +28,14 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: ARG001
     _validate_production_config()
     logger.info("startup", environment=settings.app_env, version=settings.app_version)
     container.setup()
 
     if settings.sentry_dsn:
         import sentry_sdk
+
         sentry_sdk.init(
             dsn=settings.sentry_dsn,
             environment=settings.app_env,

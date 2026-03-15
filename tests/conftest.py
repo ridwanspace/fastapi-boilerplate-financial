@@ -11,9 +11,7 @@ from src.main import create_app
 from src.settings import settings
 
 
-TEST_DATABASE_URL = settings.database_url.replace(
-    "/boilerplate_db", "/boilerplate_test_db"
-)
+TEST_DATABASE_URL = settings.database_url.replace("/boilerplate_db", "/boilerplate_test_db")
 
 
 @pytest.fixture(scope="session")

@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
@@ -53,9 +52,7 @@ class TransactionListResponse(BaseModel):
     has_previous: bool
 
     @classmethod
-    def from_paged_result(
-        cls, result: PagedResult[TransactionDTO]
-    ) -> "TransactionListResponse":
+    def from_paged_result(cls, result: PagedResult[TransactionDTO]) -> "TransactionListResponse":
         return cls(
             items=[TransactionResponse.from_dto(dto) for dto in result.items],
             total=result.total,

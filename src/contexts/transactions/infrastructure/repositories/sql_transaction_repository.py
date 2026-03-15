@@ -68,12 +68,16 @@ class SqlTransactionRepository:
         ).scalar_one()
 
         rows = (
-            await self._session.execute(
-                base.order_by(TransactionModel.created_at.desc())
-                .offset(pagination.offset)
-                .limit(pagination.limit)
+            (
+                await self._session.execute(
+                    base.order_by(TransactionModel.created_at.desc())
+                    .offset(pagination.offset)
+                    .limit(pagination.limit)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         return PagedResult(
             items=[self._to_entity(row) for row in rows],
@@ -110,6 +114,7 @@ class SqlTransactionRepository:
         # Guard: version must match to prevent lost updates (optimistic locking)
         if model.version != transaction.version - 1:
             from src.contexts.transactions.domain.exceptions import TransactionConcurrentUpdateError
+
             raise TransactionConcurrentUpdateError(
                 f"Transaction {transaction.id} was modified concurrently. Please retry."
             )

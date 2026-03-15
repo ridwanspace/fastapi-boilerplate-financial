@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from src.infrastructure.auth.dependencies import get_jwt_service
 from src.infrastructure.auth.jwt_service import InvalidTokenError, JWTService
 from src.infrastructure.auth.schemas import RefreshRequest, TokenPair, TokenRequest
-from src.infrastructure.auth.dependencies import get_jwt_service
 from src.settings import settings
 
 
@@ -17,7 +17,7 @@ _limiter = Limiter(key_func=get_remote_address)
 @router.post("/token", response_model=TokenPair, summary="Issue access + refresh token pair")
 @_limiter.limit("10/minute")
 async def issue_token(
-    request: Request,
+    request: Request,  # noqa: ARG001
     body: TokenRequest,
     jwt_service: JWTService = Depends(get_jwt_service),
 ) -> TokenPair:
@@ -46,13 +46,15 @@ async def issue_token(
 
     # TODO: Replace with user_id from DB lookup
     user_id = uuid.uuid4()
-    return jwt_service.issue_token_pair(user_id=user_id, scopes=["transactions:read", "transactions:write"])
+    return jwt_service.issue_token_pair(
+        user_id=user_id, scopes=["transactions:read", "transactions:write"]
+    )
 
 
 @router.post("/refresh", response_model=TokenPair, summary="Exchange refresh token for new pair")
 @_limiter.limit("20/minute")
 async def refresh_token(
-    request: Request,
+    request: Request,  # noqa: ARG001
     body: RefreshRequest,
     jwt_service: JWTService = Depends(get_jwt_service),
 ) -> TokenPair:

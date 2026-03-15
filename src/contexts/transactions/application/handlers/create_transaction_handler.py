@@ -5,13 +5,12 @@ from src.contexts.transactions.application.commands.create_transaction import (
 )
 from src.contexts.transactions.application.dtos.transaction_dto import TransactionDTO
 from src.contexts.transactions.domain.entities.transaction import Transaction
-from src.contexts.transactions.domain.exceptions import DuplicateTransactionError
 from src.contexts.transactions.domain.value_objects.transaction_type import TransactionType
 from src.contexts.transactions.infrastructure.repositories.sql_transaction_repository import (
     SqlTransactionRepository,
 )
 from src.infrastructure.database.unit_of_work import SqlAlchemyUnitOfWork
-from src.shared.application.result import Err, Ok, Result
+from src.shared.application.result import Ok, Result
 from src.shared.domain.value_objects.money import Money
 
 
