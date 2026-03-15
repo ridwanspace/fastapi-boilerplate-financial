@@ -37,3 +37,10 @@ paths:
 
 - All GCS SDK calls wrapped with `asyncio.to_thread()` — SDK is synchronous
 - Never call GCS SDK directly from async context without `to_thread()`
+- GCS SDK and redis client have no type stubs — suppress mypy errors with targeted comments:
+  - `# type: ignore[no-any-return]` on return statements that hand back untyped SDK values
+  - `# type: ignore[no-untyped-call]` on `service_account.Credentials.from_service_account_*` calls
+- Token-type string literals (`"bearer"`, `"access"`, `"refresh"`) in Pydantic schemas trigger S105
+  (false positive — they are not passwords). Suppress with `# noqa: S105`
+- New bounded context model imports in `base.py → import_all_models()` must only be added once the
+  context's infrastructure module actually exists — comment them out with `# noqa: ERA001` until then

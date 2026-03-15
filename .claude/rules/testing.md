@@ -17,6 +17,10 @@ paths:
 - No database, no file system, no network
 - Test one behaviour per test function
 - Use `make_transaction(**overrides)` helper pattern — never repeat construction boilerplate
+- `pytest.raises()` must always specify a **concrete exception class**, never bare `Exception`:
+  - Frozen dataclass mutation → `FrozenInstanceError` (from `dataclasses`)
+  - Invalid domain transition → the specific domain exception (e.g., `InvalidTransactionError`)
+  - Use `match=` parameter if the same exception type can be raised for different reasons
 
 ## Integration Tests
 

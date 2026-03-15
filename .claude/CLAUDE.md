@@ -9,16 +9,18 @@ Shared kernel in `src/shared/` — no context may import from another context di
 ## Key Commands
 
 ```bash
-make dev          # start postgres + redis via docker-compose
-make run          # start the app (uvicorn)
-make test-unit    # pytest -m unit
-make test-int     # pytest -m integration (requires TEST_DATABASE_URL)
-make test-e2e     # pytest -m e2e
-make lint         # ruff check + mypy
-make format       # ruff format
-make migrate      # alembic upgrade head
-make migrate-create  # alembic revision --autogenerate -m "..."
+make dev              # install all dependencies (including dev)
+make run              # start the app (uvicorn, hot reload)
+make test-unit        # pytest -m unit
+make test-integration # pytest -m integration (requires TEST_DATABASE_URL)
+make test-e2e         # pytest -m e2e
+make lint             # ruff check + mypy
+make format           # ruff format + ruff check --fix
+make migrate          # alembic upgrade head
+make migrate-create msg="..."  # alembic revision --autogenerate
 ```
+
+All Makefile targets use `python -m <tool>` so they work correctly under conda environments.
 
 ## Code Style
 
@@ -63,6 +65,12 @@ make migrate-create  # alembic revision --autogenerate -m "..."
 Copy `.env.example` → `.env` before first run. `JWT_SECRET_KEY` must be ≥ 32 chars.
 Test env: `.env.test` (auto-loaded by `tests/conftest.py`).
 Production: `APP_ENV=production` triggers startup validation — `DEBUG` must be `false`, GCS must be configured.
+
+**`ALLOWED_ORIGINS`** must be a JSON array string — pydantic-settings v2 parses `list[str]` fields as JSON:
+```
+ALLOWED_ORIGINS=["http://localhost:3000","http://localhost:8080"]
+```
+A comma-separated string (`http://localhost:3000,http://localhost:8080`) will fail at startup.
 
 See @README.md for full architecture diagrams and API reference.
 
