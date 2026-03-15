@@ -1,7 +1,5 @@
-import asyncio
 from collections.abc import AsyncGenerator
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -12,11 +10,6 @@ from src.settings import settings
 
 
 TEST_DATABASE_URL = settings.database_url.replace("/boilerplate_db", "/boilerplate_test_db")
-
-
-@pytest.fixture(scope="session")
-def event_loop_policy():
-    return asyncio.DefaultEventLoopPolicy()
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -31,13 +24,17 @@ async def test_engine():
     await engine.dispose()
 
 
+@pytest_asyncio.fixture(scope="session")
+async def session_factory(test_engine):
+    return async_sessionmaker(test_engine, expire_on_commit=False)
+
+
 @pytest_asyncio.fixture
-async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
+async def db_session(session_factory) -> AsyncGenerator[AsyncSession, None]:
     """
     Provides an AsyncSession with automatic rollback after each test.
-    Uses SAVEPOINT for fast isolation without recreating the schema.
+    Uses nested transaction (SAVEPOINT) for fast isolation without recreating the schema.
     """
-    session_factory = async_sessionmaker(test_engine, expire_on_commit=False)
     async with session_factory() as session:
         async with session.begin():
             yield session

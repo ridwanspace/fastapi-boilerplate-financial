@@ -40,5 +40,4 @@ htmlcov/
 *.json
 !pyproject.toml
 
-# Alembic
-alembic/versions/*.py
+# Alembic — migration files are tracked (initial schema ships with the boilerplate)

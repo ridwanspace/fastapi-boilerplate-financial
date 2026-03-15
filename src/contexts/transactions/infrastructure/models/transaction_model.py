@@ -63,6 +63,6 @@ class TransactionModel(Base):
         Index(
             "ix_transactions_pending",
             "account_id",
-            postgresql_where="status = 'pending'",
+            postgresql_where="status = 'PENDING'",
         ),
     )
