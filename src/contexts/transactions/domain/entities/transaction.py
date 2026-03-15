@@ -132,8 +132,12 @@ class Transaction(AggregateRoot):
     # ------------------------------------------------------------------
 
     def settle(self, settled_by_id: uuid.UUID | None = None) -> None:
-        if self._status != TransactionStatus.PENDING:
+        if self._status == TransactionStatus.SETTLED:
             raise TransactionAlreadySettledError(
+                f"Cannot settle transaction in status: {self._status}"
+            )
+        if self._status != TransactionStatus.PENDING:
+            raise InvalidTransactionError(
                 f"Cannot settle transaction in status: {self._status}"
             )
         self._status = TransactionStatus.SETTLED
@@ -145,9 +149,7 @@ class Transaction(AggregateRoot):
 
     def fail(self, reason: str, failed_by_id: uuid.UUID | None = None) -> None:
         if self._status != TransactionStatus.PENDING:
-            raise InvalidTransactionError(
-                f"Cannot fail transaction in status: {self._status}"
-            )
+            raise InvalidTransactionError(f"Cannot fail transaction in status: {self._status}")
         self._status = TransactionStatus.FAILED
         self._failure_reason = reason
         self._updated_by_id = failed_by_id
@@ -157,9 +159,7 @@ class Transaction(AggregateRoot):
 
     def cancel(self, cancelled_by_id: uuid.UUID | None = None) -> None:
         if self._status != TransactionStatus.PENDING:
-            raise InvalidTransactionError(
-                f"Cannot cancel transaction in status: {self._status}"
-            )
+            raise InvalidTransactionError(f"Cannot cancel transaction in status: {self._status}")
         self._status = TransactionStatus.CANCELLED
         self._updated_by_id = cancelled_by_id
         self._version += 1
