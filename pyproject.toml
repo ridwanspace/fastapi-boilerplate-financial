@@ -1,0 +1,273 @@
+[project]
+name = "fastapi-boilerplate"
+version = "0.1.0"
+description = "Production-grade FastAPI boilerplate for financial applications"
+readme = "README.md"
+license = { text = "Proprietary" }
+requires-python = ">=3.12"
+authors = [
+    { name = "Ridwan" }
+]
+keywords = ["fastapi", "ddd", "clean-architecture", "financial", "api"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+]
+
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.6.0",
+    "pyjwt[crypto]>=2.10.0",
+    "redis[hiredis]>=5.2.0",
+    "google-cloud-storage>=2.19.0",
+    "python-multipart>=0.0.12",
+    "httpx>=0.28.0",
+    "structlog>=24.4.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "slowapi>=0.1.9",
+    "sentry-sdk[fastapi]>=2.19.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+    "httpx>=0.28.0",
+    "factory-boy>=3.3.1",
+    "freezegun>=1.5.1",
+    "anyio[trio]>=4.7.0",
+]
+
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+# ============================================================================
+# Black - Code Formatter
+# ============================================================================
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+    | migrations
+    | alembic
+)/
+'''
+
+# ============================================================================
+# Ruff - Linter
+# ============================================================================
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "alembic",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = [
+    "F",      # Pyflakes
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "S",      # flake8-bandit (security)
+    "C4",     # flake8-comprehensions
+    "DTZ",    # flake8-datetimez
+    "T10",    # flake8-debugger
+    "ISC",    # flake8-implicit-str-concat
+    "PIE",    # flake8-pie
+    "PT",     # flake8-pytest-style
+    "Q",      # flake8-quotes
+    "RSE",    # flake8-raise
+    "RET",    # flake8-return
+    "SIM",    # flake8-simplify
+    "TID",    # flake8-tidy-imports
+    "TCH",    # flake8-type-checking
+    "ARG",    # flake8-unused-arguments
+    "PTH",    # flake8-use-pathlib
+    "ERA",    # eradicate (commented-out code)
+    "RUF",    # Ruff-specific rules
+]
+ignore = [
+    "S101",   # assert used - allow in tests
+    "S104",   # Possible binding to all interfaces - needed for Docker
+    "S106",   # Possible hardcoded password - false positive for token_type="Bearer"
+    "B008",   # function-call-in-default-argument - FastAPI Depends pattern
+    "RUF012", # Mutable class attributes - Pydantic models need this
+    "TC001",  # Move application import into TYPE_CHECKING - runtime imports needed
+    "TC003",  # Move standard library import into TYPE_CHECKING - runtime imports needed
+    "RUF022", # __all__ sorting - prefer logical grouping by category
+    "UP046",  # Generic[T] syntax - prefer explicit over implicit for readability
+    "SIM102", # Nested if - sometimes more readable than combined conditions
+    "SIM108", # Ternary operator - sometimes if/else blocks more readable
+    "S110",   # try-except-pass - allowed for graceful fallback when data not available
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",   # assert allowed in tests
+    "S105",   # hardcoded passwords allowed in tests
+    "S106",   # hardcoded password argument allowed in tests
+    "ARG001", # unused function argument - fixtures
+    "ARG002", # unused method argument
+    "TC002",  # Move third-party import into TYPE_CHECKING - fixtures use at runtime
+    "DTZ011", # date.today() allowed in tests - timezone not critical
+    "SIM117", # nested with statements - more readable for testing mock contexts
+    "E501",   # line length - long mock patch statements
+]
+"src/api/**/*.py" = [
+    "B008",   # FastAPI Depends pattern
+]
+"src/contexts/**/api/**/*.py" = [
+    "B008",   # FastAPI Depends pattern
+]
+"scripts/**/*.py" = [
+    "DTZ011", # date.today() allowed in scripts - timezone not critical
+    "E501",   # line length - seed scripts contain data definitions
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+force-single-line = false
+lines-after-imports = 2
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "double"
+
+# ============================================================================
+# Mypy - Type Checker
+# ============================================================================
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_configs = true
+show_error_codes = true
+show_column_numbers = true
+pretty = true
+
+[[tool.mypy.overrides]]
+module = [
+    "google.*",
+    "passlib.*",
+    "jose.*",
+    "redis.*",
+    "asyncpg.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_untyped_decorators = false
+
+# ============================================================================
+# Pytest - Testing
+# ============================================================================
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = [
+    "-ra",
+    "-q",
+    "--strict-markers",
+    "--strict-config",
+    "-p", "no:warnings",
+]
+markers = [
+    "unit: Unit tests (fast, no external dependencies)",
+    "integration: Integration tests (require database or external services)",
+    "e2e: End-to-end tests (full HTTP stack)",
+    "slow: Slow running tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+# ============================================================================
+# Coverage - Code Coverage
+# ============================================================================
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/alembic/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "if typing.TYPE_CHECKING:",
+    "@abstractmethod",
+    "@abc.abstractmethod",
+]
+fail_under = 80
+show_missing = true
+precision = 2
+
+# ============================================================================
+# Bandit - Security Linter
+# ============================================================================
+[tool.bandit]
+exclude_dirs = ["tests", "venv", ".venv", "alembic"]
+skips = ["B101", "B104", "B105", "B106", "B110", "B112", "B311", "B404", "B603"]
