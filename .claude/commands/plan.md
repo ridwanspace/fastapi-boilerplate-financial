@@ -36,7 +36,7 @@ Read key files to understand current patterns and avoid re-inventing existing so
 
 ---
 
-## Step 3 — Determine the output file path
+## Step 3 — Determine the output file path(s) and plan split strategy
 
 Find the next sequential plan file number:
 
@@ -48,11 +48,41 @@ ls docs/plan/ | sort | tail -1
 - If the last file starts with `08` → use `09`
 - File name format: `{NN}-{kebab-case-topic}.md` (e.g., `03-wallet-refund-flow.md`)
 
+### When to split into multiple files
+
+After sizing the feature, apply this rule:
+
+| Signal | Action |
+|--------|--------|
+| ≤ 3 phases **or** ≤ 12 tasks **or** ≤ 1 bounded context | Single file |
+| 4–6 phases **or** 13–24 tasks **or** 2 bounded contexts | Split into **2** files |
+| 7+ phases **or** 25+ tasks **or** 3+ bounded contexts | Split into **3+** files |
+
+**How to split**:
+- Assign consecutive numbers: `{NN}`, `{NN+1}`, `{NN+2}`, …
+- Each file is a self-contained plan covering one cohesive slice (e.g., by bounded context, by layer group, or by delivery milestone).
+- Suggested split axes (pick the most natural for the feature):
+  - **By bounded context** — one file per context (e.g., `04-payment-domain.md`, `05-payment-api.md`)
+  - **By delivery phase** — foundation first, then features, then hardening (e.g., `04-wallet-foundation.md`, `05-wallet-transactions.md`, `06-wallet-reporting.md`)
+  - **By layer group** — domain+application in one file, infrastructure+API in another
+- Add a **`Part N of M`** label in each file's header (see template below).
+- Every split file must have its own Overview, Prerequisites, Progress table, checklist sections, and Open Questions.
+- The first file's "Depends On" should list "None" (or real external deps); subsequent files must list the previous file(s) in the series.
+
+**Naming convention for split plans**:
+```
+{NN}-{topic}-part1-{slice-name}.md
+{NN+1}-{topic}-part2-{slice-name}.md
+```
+Example: `04-notifications-part1-domain.md`, `05-notifications-part2-api.md`
+
 ---
 
-## Step 4 — Write the plan
+## Step 4 — Write the plan(s)
 
-Save the plan to `docs/plan/{NN}-{topic}.md` using this exact structure:
+If the split strategy (Step 3) requires multiple files, write each file in sequence before moving to Step 5.
+
+Save each plan to `docs/plan/{NN}-{topic}.md` using this exact structure:
 
 ```markdown
 # {Descriptive Title}
@@ -61,7 +91,8 @@ Save the plan to `docs/plan/{NN}-{topic}.md` using this exact structure:
 **Updated**: {today's date YYYY-MM-DD}
 **Priority**: ⭐⭐⭐ (adjust 1–5 stars based on criticality)
 **Status**: 📋 Planning
-**Depends On**: {list any prerequisite bounded contexts or tasks, or "None"}
+**Part**: {N of M} (omit this line for single-file plans)
+**Depends On**: {list any prerequisite bounded contexts or tasks, or "None"; for part 2+ always list the previous part file}
 **Module**: {relevant bounded context, e.g., "Transaction", "Auth", "Wallet"}
 
 ---
@@ -208,14 +239,14 @@ Follow these when drafting:
 **Scope rules**:
 - Do not implement code — this is a plan only.
 - Do not modify any existing source files.
-- Only create the plan file in `docs/plan/`.
+- Only create plan files in `docs/plan/`.
 
 ---
 
 ## Step 6 — Confirm to the user
 
-After saving the file, report:
-1. The file path created (e.g., `docs/plan/03-wallet-refund-flow.md`)
-2. A one-paragraph summary of what the plan covers
-3. The number of tasks, unit tests, and integration tests defined
-4. Any open questions that should be resolved before implementation
+After saving all files, report:
+1. All file paths created (e.g., `docs/plan/03-wallet-part1-domain.md`, `docs/plan/04-wallet-part2-api.md`)
+2. If split: a one-sentence description of what each part covers and why it was split that way
+3. A combined count of tasks, unit tests, and integration tests across all files
+4. Any open questions that should be resolved before implementation starts
