@@ -9,7 +9,7 @@
 ![Alembic](https://img.shields.io/badge/Alembic-1.14-6BA539?style=flat-square)
 ![Ruff](https://img.shields.io/badge/Ruff-linter-D7FF64?style=flat-square&logo=ruff&logoColor=black)
 ![Mypy](https://img.shields.io/badge/Mypy-strict-2A6DB2?style=flat-square)
-![License](https://img.shields.io/badge/License-Proprietary-red?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 Production-grade FastAPI boilerplate for financial applications, built with **Domain-Driven Design (DDD)** and **Clean Architecture**. Designed for teams who need a solid, extensible foundation — not a toy scaffold.
 
@@ -29,7 +29,7 @@ Production-grade FastAPI boilerplate for financial applications, built with **Do
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
-  - [1. Clone and install](#1-clone-and-install)
+  - [1. Create your repo from this template](#1-create-your-repo-from-this-template)
   - [2. Configure environment](#2-configure-environment)
   - [3. Start infrastructure](#3-start-infrastructure)
   - [4. Create the test database](#4-create-the-test-database)
@@ -484,11 +484,15 @@ Before you begin, make sure the following are installed on your machine:
 
 ## Quick Start
 
-### 1. Clone and install
+### 1. Create your repo from this template
+
+Click the **"Use this template"** button at the top of the [GitHub repository page](https://github.com/ridwanspace/fastapi-boilerplate-financial), then choose **"Create a new repository"**.
+
+Once your new repo is created, clone it and install dependencies:
 
 ```bash
-git clone <repository-url>
-cd fastapi-boilerplate
+git clone git@github.com:<your-username>/<your-repo-name>.git
+cd <your-repo-name>
 
 # Create and activate a virtual environment
 python -m venv .venv
@@ -1081,13 +1085,13 @@ Build and run the production image:
 
 ```bash
 # Build the image
-docker build -f docker/Dockerfile -t fastapi-boilerplate:latest .
+docker build -f docker/Dockerfile -t <your-repo-name>:latest .
 
 # Run it (pass your env values)
 docker run -p 8000:8000 \
   --env-file .env \
   -e DATABASE_URL=postgresql+asyncpg://... \
-  fastapi-boilerplate:latest
+  <your-repo-name>:latest
 ```
 
 **Security properties of the production image:**
