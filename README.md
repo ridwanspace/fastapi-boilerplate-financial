@@ -68,6 +68,36 @@ For GCS setup, conda environments, and detailed steps see [Getting Started](docs
 
 ---
 
+## Claude Code
+
+This repo ships with first-class [Claude Code](https://code.claude.com/docs/en/overview.md) support — context-aware rules, custom slash commands, and an AI-assisted development workflow out of the box.
+
+**Install Claude Code** ([setup guide](https://code.claude.com/docs/en/setup.md)):
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+**Custom slash commands** ([docs](https://code.claude.com/docs/en/skills.md)):
+
+| Command | What it does |
+|---|---|
+| `/setup` | Full first-time project setup — installs deps, starts Docker, creates test DB, runs migrations, smoke-tests the server |
+| `/plan <feature>` | Researches the codebase and generates a structured implementation plan in `docs/plan/` |
+| `/run-plan <file> <task-id>` | Executes a single task from a plan file, writes tests, runs lint/typecheck, updates progress |
+| `/commit` | Runs format → lint → typecheck → unit tests, reviews the diff for financial safety issues, then commits |
+
+**After cloning, just run:**
+
+```bash
+claude   # open Claude Code in the project root
+/setup   # guided setup from scratch
+```
+
+See [Claude Code guide](docs/guide/claude-code.md) for the full workflow.
+
+---
+
 ## Documentation
 
 | Guide | Description |
