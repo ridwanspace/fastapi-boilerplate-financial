@@ -32,8 +32,9 @@ Production-grade FastAPI boilerplate for financial applications, built with **Do
   - [1. Clone and install](#1-clone-and-install)
   - [2. Configure environment](#2-configure-environment)
   - [3. Start infrastructure](#3-start-infrastructure)
-  - [4. Run migrations](#4-run-migrations)
-  - [5. Start the server](#5-start-the-server)
+  - [4. Create the test database](#4-create-the-test-database)
+  - [5. Run migrations](#5-run-migrations)
+  - [6. Start the server](#6-start-the-server)
 - [Environment Variables](#environment-variables)
 - [API Reference](#api-reference)
   - [Auth Endpoints](#auth-endpoints)
@@ -46,6 +47,10 @@ Production-grade FastAPI boilerplate for financial applications, built with **Do
   - [Local Development](#local-development)
   - [Production Build](#production-build)
 - [Adding a New Bounded Context](#adding-a-new-bounded-context)
+- [Developing with Claude Code](#developing-with-claude-code)
+  - [Slash Commands](#slash-commands)
+  - [Context-Aware Rule Files](#context-aware-rule-files)
+  - [Typical Development Workflow](#typical-development-workflow)
 - [Key Design Decisions](#key-design-decisions)
 - [Make Commands Reference](#make-commands-reference)
 - [Troubleshooting](#troubleshooting)
@@ -501,23 +506,60 @@ pip install -r requirements-dev.txt
 cp .env.example .env
 ```
 
-Open `.env` and fill in the required values. At minimum, set a strong JWT secret:
+Open `.env` and fill in the required values:
 
-```env
-# Generate a secure random key:
-# python -c "import secrets; print(secrets.token_hex(32))"
-JWT_SECRET_KEY=your-generated-secret-here
+```bash
+# Generate a secure JWT secret (minimum 32 chars):
+openssl rand -hex 32
 ```
 
-For GCS, you can leave those fields empty for now and provide the service account later (see [Environment Variables](#environment-variables)).
+**Required values to set in `.env`:**
+
+| Variable | How to get it |
+|---|---|
+| `JWT_SECRET_KEY` | `openssl rand -hex 32` |
+| `GCS_PROJECT_ID` | Your GCP project ID |
+| `GCS_BUCKET_NAME` | See GCS setup below |
+| `GCS_CREDENTIALS_PATH` | Path to your service account JSON file |
+
+**GCS setup — create a service account and bucket:**
+
+```bash
+# 1. Create a service account
+gcloud iam service-accounts create fastapi-boilerplate-sa \
+  --display-name="FastAPI Boilerplate Service Account" \
+  --project=<your-project-id>
+
+# 2. Grant GCS and Cloud SQL access
+gcloud projects add-iam-policy-binding <your-project-id> \
+  --member="serviceAccount:fastapi-boilerplate-sa@<your-project-id>.iam.gserviceaccount.com" \
+  --role="roles/storage.admin"
+
+gcloud projects add-iam-policy-binding <your-project-id> \
+  --member="serviceAccount:fastapi-boilerplate-sa@<your-project-id>.iam.gserviceaccount.com" \
+  --role="roles/cloudsql.client"
+
+# 3. Download the key to the project root (gitignored via *.json)
+gcloud iam service-accounts keys create ./service-account.json \
+  --iam-account=fastapi-boilerplate-sa@<your-project-id>.iam.gserviceaccount.com
+
+# 4. Create a private GCS bucket
+gsutil mb -p <your-project-id> -l asia-southeast1 gs://<your-bucket-name>
+```
+
+Then set in `.env`:
+
+```env
+GCS_PROJECT_ID=<your-project-id>
+GCS_BUCKET_NAME=<your-bucket-name>
+GCS_CREDENTIALS_PATH=./service-account.json
+```
 
 ### 3. Start infrastructure
 
-This starts PostgreSQL and Redis locally via Docker:
+Start PostgreSQL and Redis locally via Docker:
 
 ```bash
-make docker-up
-# or:
 docker compose -f docker/docker-compose.yml up -d postgres redis
 ```
 
@@ -529,7 +571,16 @@ docker compose -f docker/docker-compose.yml ps
 
 You should see both `postgres` and `redis` with status `healthy`.
 
-### 4. Run migrations
+### 4. Create the test database
+
+The test suite requires a separate database. Create it once:
+
+```bash
+docker compose -f docker/docker-compose.yml exec postgres \
+  psql -U postgres -c "CREATE DATABASE boilerplate_test_db;"
+```
+
+### 5. Run migrations
 
 Apply the database schema:
 
@@ -539,7 +590,7 @@ make migrate
 alembic upgrade head
 ```
 
-### 5. Start the server
+### 6. Start the server
 
 ```bash
 make run
@@ -1153,6 +1204,65 @@ api_router.include_router(payments_router)
 | `tests/unit/domain/test_payment_entity.py` | State transitions, version increments, invariant enforcement, soft-delete |
 | `tests/integration/repositories/test_payment_repository.py` | Idempotency, immutability, soft-delete filtering, audit fields |
 | `tests/e2e/test_payment_endpoints.py` | Auth required, correct HTTP status codes |
+
+---
+
+## Developing with Claude Code
+
+This project ships with a `.claude/` configuration directory that makes Claude Code context-aware of the architecture, financial rules, and team conventions. When you open this project in Claude Code, it automatically enforces the right rules for the layer you are editing.
+
+### Slash Commands
+
+Three custom slash commands are available in Claude Code:
+
+| Command | Usage | What it does |
+|---|---|---|
+| `/plan` | `/plan <feature description>` | Researches the codebase, then generates a structured implementation plan saved to `docs/plan/`. Includes tasks, acceptance criteria, unit/integration test lists, financial safety checklist, and architecture compliance checklist. |
+| `/run-plan` | `/run-plan <plan-file> <task-id>` | Executes a single task from a plan file. Reads the plan, explores the codebase, implements the code, writes the specified tests, runs format/lint/typecheck/tests, and updates the plan file with progress. |
+| `/commit` | `/commit [message hint]` | Runs `format → lint → typecheck → unit tests` in order, reviews the staged diff for financial safety violations, drafts a conventional commit message, and commits only after your confirmation. |
+
+**Example workflow:**
+
+```bash
+# 1. Ask Claude to plan a new feature
+/plan add wallet balance tracking with multi-currency support
+
+# 2. Execute tasks one by one from the generated plan
+/run-plan docs/plan/00-wallet-balance.md 1.1
+/run-plan docs/plan/00-wallet-balance.md 1.2
+
+# 3. Commit when ready
+/commit
+```
+
+### Context-Aware Rule Files
+
+The `.claude/rules/` directory contains layer-specific guidelines that Claude Code loads automatically based on which files you are editing:
+
+| Rule File | Auto-loaded when editing | What it enforces |
+|---|---|---|
+| `rules/domain.md` | `src/contexts/*/domain/**/*.py` | Zero framework imports, state transition pattern, `Money` arithmetic, event collection |
+| `rules/application.md` | `src/contexts/*/application/**/*.py` | `Result[T]` return type, UoW usage, idempotency check before INSERT, audit trail |
+| `rules/infrastructure.md` | `src/contexts/*/infrastructure/**/*.py` | `Numeric(19,4)` for money, optimistic locking validation, soft-delete filter on all SELECTs |
+| `rules/api.md` | `src/contexts/*/api/**/*.py` | `Idempotency-Key` header, domain exception → HTTP mapping, `amount` as `str` in responses |
+| `rules/migrations.md` | `alembic/**/*.py` | Required financial columns, column rename strategy, autogenerate review checklist |
+| `rules/security.md` | **All files** | No hard-coded credentials, CORS whitelist, no f-string SQL, signed URL expiry |
+| `rules/testing.md` | `tests/**/*.py` | Test marker discipline, no DB mocks in integration tests, naming conventions |
+
+You do not need to reference these manually — Claude Code picks them up based on the file path.
+
+### Typical Development Workflow
+
+```
+1. /plan <new feature>          → plan saved to docs/plan/NN-feature.md
+2. /run-plan <plan> <task-1.1>  → domain entity created + unit tests passing
+3. /run-plan <plan> <task-1.2>  → application handler created + tests passing
+4. /run-plan <plan> <task-1.3>  → repository + integration tests passing
+5. /run-plan <plan> <task-1.4>  → API router created + e2e tests passing
+6. /commit                      → format, lint, typecheck, unit tests, then commit
+```
+
+The `/run-plan` command updates the plan file after each task, tracking progress with `[x]` checkboxes and an execution log at the bottom of the file.
 
 ---
 
