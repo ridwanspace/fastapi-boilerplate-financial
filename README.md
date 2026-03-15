@@ -598,9 +598,11 @@ alembic upgrade head
 
 ```bash
 make run
-# or:
-uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+# or (if make can't find uvicorn — e.g. conda env):
+python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
+
+> **conda users:** All `make` targets use `python -m <tool>` so they resolve through the active conda environment automatically.
 
 The API is now running. Open your browser:
 
@@ -626,7 +628,7 @@ All configuration is managed through environment variables loaded by `src/settin
 | `DEBUG` | `false` | No | Enable SQLAlchemy query logging. Blocked in production. |
 | `LOG_LEVEL` | `INFO` | No | Logging level: `DEBUG`, `INFO`, `WARNING`, `ERROR` |
 | `API_PREFIX` | `/api/v1` | No | URL prefix for all API routes |
-| `ALLOWED_ORIGINS` | `http://localhost:3000` | No | Comma-separated CORS allowed origins |
+| `ALLOWED_ORIGINS` | `["http://localhost:3000"]` | No | JSON array of CORS allowed origins |
 
 ### Database
 
@@ -984,7 +986,7 @@ Migrations are managed by Alembic. The `alembic/env.py` is configured for async 
 ```bash
 make migrate
 # or:
-alembic upgrade head
+python -m alembic upgrade head
 ```
 
 ### Create a new migration
@@ -994,7 +996,7 @@ After modifying or adding a SQLAlchemy model, generate the migration automatical
 ```bash
 make migrate-create msg="add payment_method to transactions"
 # or:
-alembic revision --autogenerate -m "add payment_method to transactions"
+python -m alembic revision --autogenerate -m "add payment_method to transactions"
 ```
 
 > **Important:** Always review the generated file in `alembic/versions/` before applying. Autogenerate may miss some changes (e.g. check constraints defined only at the Python level, custom PostgreSQL types).
@@ -1002,10 +1004,10 @@ alembic revision --autogenerate -m "add payment_method to transactions"
 ### Other useful migration commands
 
 ```bash
-alembic current          # Show current applied revision
-alembic history          # Show migration history
-alembic downgrade -1     # Rollback one migration
-alembic downgrade base   # Rollback all migrations (⚠️ destructive)
+python -m alembic current          # Show current applied revision
+python -m alembic history          # Show migration history
+python -m alembic downgrade -1     # Rollback one migration
+python -m alembic downgrade base   # Rollback all migrations (⚠️ destructive)
 ```
 
 ### Registering new models
@@ -1014,11 +1016,12 @@ When you add a new SQLAlchemy model, register it in `src/infrastructure/database
 
 ```python
 def import_all_models() -> None:
-    from src.contexts.accounts.infrastructure.models import account_model  # noqa: F401
     from src.contexts.transactions.infrastructure.models import transaction_model  # noqa: F401
     # Add your new model import here ↓
     from src.contexts.payments.infrastructure.models import payment_model  # noqa: F401
 ```
+
+> **Note:** Only import models for contexts that have been implemented. Importing a non-existent module will cause a mypy error at startup.
 
 ### Financial model conventions
 
@@ -1380,7 +1383,7 @@ container._jwt = FakeJWTService()
 |---|---|
 | `make help` | Show all available commands |
 | `make install` | Install production dependencies only |
-| `make dev` | Install all dependencies (production + dev + test) |
+| `make dev` | Install all dependencies (production + dev + test tools) |
 | `make run` | Start the dev server with hot reload on port 8000 |
 | `make test` | Run all tests with coverage report |
 | `make test-unit` | Run unit tests only (fast, no external dependencies) |
@@ -1397,6 +1400,39 @@ container._jwt = FakeJWTService()
 ---
 
 ## Troubleshooting
+
+### `make: uvicorn: No such file or directory`
+
+**Symptom:** `make run` (or any make target) fails with `No such file or directory`.
+
+**Cause:** `make` runs in a clean shell that doesn't inherit conda environment activation. The tool binaries are not on its `PATH`.
+
+**Fix:** All Makefile targets already use `python -m <tool>` to resolve through the active Python. Make sure your conda environment is activated before running `make`:
+
+```bash
+conda activate <your-env>
+make run
+```
+
+---
+
+### `ALLOWED_ORIGINS` parse error on startup
+
+**Symptom:** `pydantic_settings.exceptions.SettingsError: error parsing value for field "allowed_origins"`
+
+**Cause:** pydantic-settings v2 parses `list[str]` fields as JSON. A bare comma-separated string is not valid JSON.
+
+**Fix:** Use a JSON array in your `.env`:
+
+```env
+# ✅ Correct
+ALLOWED_ORIGINS=["http://localhost:3000","http://localhost:8080"]
+
+# ❌ Wrong — fails to parse
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
+```
+
+---
 
 ### `Connection refused` on startup
 
