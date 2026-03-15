@@ -27,11 +27,11 @@ class GCSStorage:
     def _build_client(self, settings: Settings) -> storage.Client:
         if settings.gcs_credentials_json:
             creds_dict = json.loads(settings.gcs_credentials_json)
-            credentials = service_account.Credentials.from_service_account_info(creds_dict)
+            credentials = service_account.Credentials.from_service_account_info(creds_dict)  # type: ignore[no-untyped-call]
             return storage.Client(project=settings.gcs_project_id, credentials=credentials)
 
         if settings.gcs_credentials_path:
-            credentials = service_account.Credentials.from_service_account_file(
+            credentials = service_account.Credentials.from_service_account_file(  # type: ignore[no-untyped-call]
                 settings.gcs_credentials_path
             )
             return storage.Client(project=settings.gcs_project_id, credentials=credentials)
@@ -57,7 +57,7 @@ class GCSStorage:
         def _download() -> bytes:
             bucket = self._client.bucket(self._bucket_name)
             blob = bucket.blob(source_path)
-            return blob.download_as_bytes()
+            return blob.download_as_bytes()  # type: ignore[no-any-return]
 
         return await asyncio.to_thread(_download)
 
@@ -73,7 +73,7 @@ class GCSStorage:
         def _sign() -> str:
             bucket = self._client.bucket(self._bucket_name)
             blob = bucket.blob(path)
-            return blob.generate_signed_url(
+            return blob.generate_signed_url(  # type: ignore[no-any-return]
                 expiration=timedelta(seconds=expiration_seconds),
                 method="GET",
                 version="v4",
@@ -85,6 +85,6 @@ class GCSStorage:
         def _exists() -> bool:
             bucket = self._client.bucket(self._bucket_name)
             blob = bucket.blob(path)
-            return blob.exists()
+            return blob.exists()  # type: ignore[no-any-return]
 
         return await asyncio.to_thread(_exists)

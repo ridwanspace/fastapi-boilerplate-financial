@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 class TokenPair(BaseModel):
     access_token: str
     refresh_token: str
-    token_type: str = "bearer"
+    token_type: str = "bearer"  # noqa: S105
     expires_in: int = Field(description="Access token TTL in seconds")
 
 
@@ -17,7 +17,7 @@ class AccessTokenPayload(BaseModel):
     iat: datetime
     jti: uuid.UUID = Field(description="JWT ID — unique per token")
     scopes: list[str] = Field(default_factory=list)
-    token_type: str = "access"
+    token_type: str = "access"  # noqa: S105
 
 
 class RefreshTokenPayload(BaseModel):
@@ -25,7 +25,7 @@ class RefreshTokenPayload(BaseModel):
     exp: datetime
     iat: datetime
     jti: uuid.UUID
-    token_type: str = "refresh"
+    token_type: str = "refresh"  # noqa: S105
 
 
 class CurrentUser(BaseModel):

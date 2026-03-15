@@ -19,5 +19,5 @@ class Base(DeclarativeBase):
 # Register all ORM models here so Alembic autogenerate detects them.
 # Add imports below as new contexts are created.
 def import_all_models() -> None:
-    from src.contexts.accounts.infrastructure.models import account_model  # noqa: F401
+    # from src.contexts.accounts.infrastructure.models import account_model  # noqa: ERA001
     from src.contexts.transactions.infrastructure.models import transaction_model  # noqa: F401

@@ -1,5 +1,6 @@
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import Any, cast
 
 from jose import JWTError, jwt
 
@@ -67,8 +68,11 @@ class JWTService:
             raise InvalidTokenError("Token is not a refresh token")
         return RefreshTokenPayload(**payload)
 
-    def _decode(self, token: str) -> dict:  # type: ignore[type-arg]
+    def _decode(self, token: str) -> dict[str, Any]:
         try:
-            return jwt.decode(token, self._secret, algorithms=[self._algorithm])
+            return cast(
+                "dict[str, Any]",
+                jwt.decode(token, self._secret, algorithms=[self._algorithm]),
+            )
         except JWTError as e:
             raise InvalidTokenError(f"Invalid token: {e}") from e

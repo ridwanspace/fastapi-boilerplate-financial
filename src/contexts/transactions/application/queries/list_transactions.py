@@ -2,6 +2,7 @@ import uuid
 from dataclasses import dataclass
 
 from src.contexts.transactions.application.dtos.transaction_dto import TransactionDTO
+from src.contexts.transactions.domain.entities.transaction import Transaction
 from src.contexts.transactions.domain.value_objects.transaction_status import TransactionStatus
 from src.contexts.transactions.infrastructure.repositories.sql_transaction_repository import (
     SqlTransactionRepository,
@@ -36,7 +37,7 @@ class ListTransactionsHandler:
                 page_size=paged.page_size,
             )
 
-    def _to_dto(self, transaction: "Transaction") -> TransactionDTO:  # type: ignore[name-defined]
+    def _to_dto(self, transaction: Transaction) -> TransactionDTO:
         return TransactionDTO(
             id=transaction.id,
             account_id=transaction.account_id,

@@ -1,3 +1,4 @@
+from dataclasses import FrozenInstanceError
 from decimal import Decimal
 
 import pytest
@@ -71,5 +72,5 @@ class TestMoneyArithmetic:
 
     def test_immutability(self):
         m = Money.of(100, "USD")
-        with pytest.raises(Exception):
+        with pytest.raises(FrozenInstanceError):
             m.amount = Decimal("200")  # type: ignore[misc]

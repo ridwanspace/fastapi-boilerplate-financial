@@ -165,7 +165,7 @@ class Transaction(AggregateRoot):
         self._record_event(TransactionCancelled(transaction_id=self._id))
 
     def soft_delete(self, deleted_by_id: uuid.UUID | None = None) -> None:
-        """Soft-delete: marks record as deleted without removing from DB. Never hard-delete financials."""
+        """Soft-delete: marks as deleted without removing from DB. Never hard-delete financials."""
         self._deleted_at = datetime.now(UTC)
         self._updated_by_id = deleted_by_id
         self._version += 1

@@ -15,7 +15,7 @@ class RedisClient:
         self._client = aioredis.Redis(connection_pool=self._pool)
 
     async def get(self, key: str) -> str | None:
-        return await self._client.get(key)  # type: ignore[return-value]
+        return await self._client.get(key)  # type: ignore[no-any-return]
 
     async def set(
         self,
@@ -32,7 +32,7 @@ class RedisClient:
         return bool(await self._client.exists(key))
 
     async def increment(self, key: str, amount: int = 1) -> int:
-        return await self._client.incrby(key, amount)  # type: ignore[return-value]
+        return await self._client.incrby(key, amount)  # type: ignore[no-any-return]
 
     async def expire(self, key: str, seconds: int) -> None:
         await self._client.expire(key, seconds)
