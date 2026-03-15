@@ -1,5 +1,5 @@
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import KW_ONLY, dataclass, field
 from datetime import UTC, datetime
 
 
@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 class DomainEvent:
     """Base class for all domain events. Immutable once created."""
 
+    _: KW_ONLY
     event_id: uuid.UUID = field(default_factory=uuid.uuid4)
     occurred_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 

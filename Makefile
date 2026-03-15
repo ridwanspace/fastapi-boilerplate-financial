@@ -18,41 +18,41 @@ help:
 	@echo "  docker-down      Stop local dev stack"
 
 install:
-	pip install -r requirements.txt
+	python -m pip install -r requirements.txt
 
 dev:
-	pip install -r requirements.txt -r requirements-dev.txt
+	python -m pip install -r requirements.txt -r requirements-dev.txt
 
 run:
-	uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+	python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 
 test:
-	pytest --cov=src --cov-report=term-missing --cov-report=html -v
+	python -m pytest --cov=src --cov-report=term-missing --cov-report=html -v
 
 test-unit:
-	pytest -m unit -v
+	python -m pytest -m unit -v
 
 test-integration:
-	pytest -m integration -v
+	python -m pytest -m integration -v
 
 test-e2e:
-	pytest -m e2e -v
+	python -m pytest -m e2e -v
 
 lint:
-	ruff check src tests
+	python -m ruff check src tests
 
 format:
-	ruff format src tests
-	ruff check --fix src tests
+	python -m ruff format src tests
+	python -m ruff check --fix src tests
 
 typecheck:
-	mypy src
+	python -m mypy src
 
 migrate:
-	alembic upgrade head
+	python -m alembic upgrade head
 
 migrate-create:
-	alembic revision --autogenerate -m "$(msg)"
+	python -m alembic revision --autogenerate -m "$(msg)"
 
 docker-up:
 	docker compose -f docker/docker-compose.yml up -d
